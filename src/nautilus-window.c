@@ -427,6 +427,53 @@ action_toggle_state_view_button (GSimpleAction *action,
 }
 
 static void
+undo_manager_changed (NautilusWindow *window)
+{
+        NautilusFileUndoInfo *info;
+        NautilusFileUndoManagerState undo_state;
+        NautilusToolbar *toolbar;
+        gboolean undo_active;
+        gboolean redo_active;
+        gchar *undo_label;
+        gchar *redo_label;
+        gchar *undo_description;
+        gchar *redo_description;
+        gboolean is_undo;
+
+        undo_label = undo_description = redo_label = redo_description = NULL;
+
+        /* Look up the last action from the undo manager, and get the text that
+         * describes it, e.g. "Undo Create Folder"/"Redo Create Folder"
+         */
+        info = nautilus_file_undo_manager_get_action ();
+        undo_state = nautilus_file_undo_manager_get_state ();
+        undo_active = redo_active = FALSE;
+        if (info != NULL && undo_state > NAUTILUS_FILE_UNDO_MANAGER_STATE_NONE) {
+                is_undo = (undo_state == NAUTILUS_FILE_UNDO_MANAGER_STATE_UNDO);
+
+                /* The last action can either be undone/redone. Activate the corresponding
+                 * menu item and deactivate the other
+                 */
+                undo_active = is_undo;
+                redo_active = !is_undo;
+                nautilus_file_undo_info_get_strings (info, &undo_label, &undo_description,
+                                                     &redo_label, &redo_description);
+                g_free (undo_description);
+                g_free (redo_description);
+        }
+
+        /* Set the label of the undo and redo menu items, and activate them appropriately
+         */
+        toolbar = NAUTILUS_TOOLBAR (window->priv->toolbar);
+        undo_label = undo_active && undo_label != NULL ? undo_label : g_strdup (_("_Undo"));
+        redo_label = redo_active && redo_label != NULL ? redo_label : g_strdup (_("_Redo"));
+        nautilus_toolbar_update_undo_redo_state (toolbar, undo_active, undo_label, redo_active, redo_label);
+
+        g_free (undo_label);
+        g_free (redo_label);
+}
+
+static void
 on_location_changed (NautilusWindow *window)
 {
         gtk_places_sidebar_set_location (GTK_PLACES_SIDEBAR (window->priv->places_sidebar),
@@ -2112,6 +2159,10 @@ nautilus_window_initialize_actions (NautilusWindow *window)
 		nautilus_window_show_sidebar (window);
 
 	g_variant_unref (state);
+
+        g_signal_connect_object (nautilus_file_undo_manager_get (), "undo-changed",
+                                 G_CALLBACK (undo_manager_changed), window, G_CONNECT_SWAPPED);
+        undo_manager_changed (window);
 }
 
 

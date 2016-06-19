@@ -68,7 +68,10 @@ struct _NautilusToolbarPrivate {
 	GtkWidget *operations_button;
         GtkWidget *view_button;
         GtkWidget *view_menu_zoom_section;
+        GtkWidget *view_menu_undo_section;
         GtkWidget *view_menu_custom_section;
+        GtkWidget *undo_button;
+        GtkWidget *redo_button;
         GtkWidget *view_toggle_button;
         GtkWidget *view_toggle_icon;
 
@@ -765,7 +768,10 @@ nautilus_toolbar_init (NautilusToolbar *self)
         builder = gtk_builder_new_from_resource ("/org/gnome/nautilus/ui/nautilus-toolbar-menu.ui");
         menu_popover = GTK_WIDGET (gtk_builder_get_object (builder, "menu_popover"));
         self->priv->view_menu_zoom_section = GTK_WIDGET (gtk_builder_get_object (builder, "view_menu_zoom_section"));
+        self->priv->view_menu_undo_section = GTK_WIDGET (gtk_builder_get_object (builder, "view_menu_undo_section"));
         self->priv->view_menu_custom_section = GTK_WIDGET (gtk_builder_get_object (builder, "view_menu_custom_section"));
+        self->priv->undo_button = GTK_WIDGET (gtk_builder_get_object (builder, "undo"));
+        self->priv->redo_button = GTK_WIDGET (gtk_builder_get_object (builder, "redo"));
         gtk_menu_button_set_popover (GTK_MENU_BUTTON (self->priv->view_button), menu_popover);
         g_object_unref (builder);
 
@@ -988,6 +994,10 @@ on_slot_toolbar_menu_sections_changed (NautilusToolbar    *toolbar,
         container_remove_all_children (GTK_CONTAINER (toolbar->priv->view_menu_custom_section));
 
         new_sections = nautilus_window_slot_get_toolbar_menu_sections (slot);
+
+        gtk_widget_set_visible (toolbar->priv->view_menu_undo_section,
+                                new_sections != NULL && new_sections->show_undo);
+
         if (new_sections == NULL)
                 return;
 
@@ -1043,4 +1053,43 @@ gboolean
 nautilus_toolbar_is_operations_button_active (NautilusToolbar *self)
 {
         return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->priv->operations_button));
+}
+
+static void
+update_menu_item (GtkWidget      *menu_item,
+                  NautilusWindow *window,
+                  const char     *action_name,
+                  gboolean        enabled,
+                  char           *label)
+{
+        GAction *action;
+        GValue val = G_VALUE_INIT;
+
+        /* Activate/deactivate */
+        action = g_action_map_lookup_action (G_ACTION_MAP (window), action_name);
+        g_simple_action_set_enabled (G_SIMPLE_ACTION (action), enabled);
+
+        /* Set the text of the menu item. Can't use gtk_button_set_label here
+         * as we need to set the text property, not the label. There's no equivalent
+         * gtk_model_button_set_text function
+         */
+        g_value_init (&val, G_TYPE_STRING);
+        g_value_set_string (&val, label);
+        g_object_set_property (G_OBJECT (menu_item), "text", &val);
+        g_value_unset (&val);
+}
+
+void
+nautilus_toolbar_update_undo_redo_state (NautilusToolbar *toolbar,
+                                         gboolean         undo_active,
+                                         gchar           *undo_label,
+                                         gboolean         redo_active,
+                                         gchar           *redo_label)
+{
+        NautilusWindow *window;
+
+        window = toolbar->priv->window;
+
+        update_menu_item (toolbar->priv->undo_button, window, "undo", undo_active, undo_label);
+        update_menu_item (toolbar->priv->redo_button, window, "redo", redo_active, redo_label);
 }

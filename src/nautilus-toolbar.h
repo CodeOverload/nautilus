@@ -75,4 +75,10 @@ void       nautilus_toolbar_set_active_slot    (NautilusToolbar    *toolbar,
 
 gboolean   nautilus_toolbar_is_operations_button_active (NautilusToolbar *toolbar);
 
+void       nautilus_toolbar_update_undo_redo_state      (NautilusToolbar *toolbar,
+                                                         gboolean         undo_active,
+                                                         gchar           *undo_label,
+                                                         gboolean         redo_active,
+                                                         gchar           *redo_label);
+
 #endif /* __NAUTILUS_TOOLBAR_H__ */
