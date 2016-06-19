@@ -1,0 +1,36 @@
+/*
+ * Copyright (C) 2016 Neil Herald <neil.herald@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#ifndef NAUTILUS_TOOLBAR_MENU_SECTIONS_H
+#define NAUTILUS_TOOLBAR_MENU_SECTIONS_H
+
+#include <glib.h>
+
+G_BEGIN_DECLS
+
+typedef struct _NautilusToolbarMenuSections NautilusToolbarMenuSections;
+
+struct _NautilusToolbarMenuSections {
+        GtkWidget *zoom;
+        GtkWidget *custom;
+};
+
+NautilusToolbarMenuSections *nautilus_toolbar_menu_sections_new      (void);
+void                         nautilus_toolbar_menu_sections_destroy  (NautilusToolbarMenuSections *queue);
+
+G_END_DECLS
+
+#endif /* NAUTILUS_TOOLBAR_MENU_SECTIONS_H */
